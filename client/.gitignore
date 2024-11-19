@@ -1,0 +1,14 @@
+# Node modules
+node_modules/
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js and other static builds
+.next/
+dist/
+out/
+.vercel/
+.netlify/

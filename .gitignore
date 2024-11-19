@@ -1,0 +1,37 @@
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+*.iml
+*.log
+*.swp
+*.swo
+.vscode/
+*.code-workspace
+
+# Build tools
+.gradle/
+build/
+target/
+out/
+
+# Temporary files
+*.class
+*.jar
+*.war
+*.ear
+*.pyc
+*.pyo
+*.pdb
+*.log
+*.tmp
+*.bak
+*.out
+*.lock
+*.~*
+
+# Ignore environment and security-sensitive files
+.env
+.env.*
