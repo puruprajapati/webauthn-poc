@@ -119,8 +119,7 @@ public class WebAuthnAuthenticationService {
     try {
       webAuthnManager.verify(authenticationData, authenticationParameters);
     } catch (VerificationException e) {
-      System.out.println(e.getMessage());
-      return false;
+      throw new IllegalArgumentException("Authentication Failed!!", e);
     }
 
     // Authentication is successful

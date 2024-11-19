@@ -51,6 +51,14 @@
 			<artifactId>webauthn4j-core</artifactId>
 			<version>${webauthn4j.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<version>5.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>

@@ -11,7 +11,7 @@
 
 <body>
   <div class="container mt-5">
-    <h1 class="text-center">WebAuthn Example</h1>
+    <h1 class="text-center mb-4">WebAuthn Example</h1>
     <div class="row">
       <!-- Registration Section -->
       <div class="col-md-6">
@@ -20,20 +20,25 @@
           <div class="mb-3">
             <label for="userid" class="form-label">User ID</label>
             <input type="text" class="form-control" id="userid" required>
+            <div id="userid-error" class="text-danger" style="display: none;">User ID is required.</div>
           </div>
           <div class="mb-3">
             <label for="username" class="form-label">Username</label>
             <input type="text" class="form-control" id="username" required>
+            <div id="username-error" class="text-danger" style="display: none;">Username is required.</div>
           </div>
           <div class="mb-3">
             <label for="displayname" class="form-label">Display Name</label>
             <input type="text" class="form-control" id="displayname" required>
+            <div id="displayname-error" class="text-danger" style="display: none;">Display Name is required.</div>
           </div>
           <div class="mb-3">
             <label for="phone" class="form-label">Phone</label>
             <input type="text" class="form-control" id="phone" required>
+            <div id="phone-error" class="text-danger" style="display: none;">Phone number is required.</div>
           </div>
           <button type="button" class="btn btn-primary" id="register-btn">Register</button>
+          <div id="register-error" class="text-danger mt-2" style="display: none;"></div>
         </form>
       </div>
 
@@ -44,12 +49,15 @@
           <div class="mb-3">
             <label for="loginid" class="form-label">Login ID</label>
             <input type="text" class="form-control" id="loginid" required>
+            <div id="loginid-error" class="text-danger" style="display: none;">Login ID is required.</div>
           </div>
           <button type="button" class="btn btn-success" id="login-btn">Sign In</button>
+          <div id="login-error" class="text-danger mt-2" style="display: none;"></div>
         </form>
       </div>
     </div>
   </div>
+
   <script src="script.js"></script>
 </body>
 

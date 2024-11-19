@@ -44,7 +44,7 @@ public class WebAuthnController {
 
   @PostMapping("authenticate/verify")
   public boolean verifyAuthentication(@RequestBody VerifyAuthenticationDTO verifyAuthenticationDTO){
-    return webAuthnRegistrationService.verifyRegistration(verifyAuthenticationDTO.getUserId(), verifyAuthenticationDTO.getAuthenticationResponseJSON());
+    return webAuthnAuthenticationService.verifyAuthentication(verifyAuthenticationDTO.getUserId(), verifyAuthenticationDTO.getAuthenticateResponseJSON());
   }
 
 

@@ -3,16 +3,26 @@ body {
   font-family: Arial, sans-serif;
 }
 
-h1 {
-  margin-bottom: 40px;
+h1,
+h2 {
   color: #343a40;
 }
 
-form {
+.card {
   border: 1px solid #dee2e6;
   border-radius: 8px;
   padding: 20px;
   background: #ffffff;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.card-text {
+  font-size: 1rem;
+  color: #6c757d;
 }
 
 button {

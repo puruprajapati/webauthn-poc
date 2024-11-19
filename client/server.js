@@ -13,6 +13,11 @@ app.use(express.static(path.join(__dirname)));
 // In-memory database for users
 const users = [];
 
+// Route to serve the dashboard
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
 // Registration endpoint
 app.post('/register', (req, res) => {
   const { userId, username, displayName, phone } = req.body;
