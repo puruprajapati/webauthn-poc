@@ -1,9 +1,6 @@
 package com.bofa.webauthn.controller;
 
-import com.bofa.webauthn.dto.PublicKeyCredentialRequestOptionsDTO;
-import com.bofa.webauthn.dto.UserDTO;
-import com.bofa.webauthn.dto.VerifyAuthenticationDTO;
-import com.bofa.webauthn.dto.VerifyRegistrationDTO;
+import com.bofa.webauthn.dto.*;
 import com.bofa.webauthn.service.WebAuthnAuthenticationService;
 import com.bofa.webauthn.service.WebAuthnRegistrationService;
 import com.webauthn4j.data.PublicKeyCredentialCreationOptions;
@@ -27,7 +24,7 @@ public class WebAuthnController {
   }
 
   @PostMapping("register/options")
-  public PublicKeyCredentialCreationOptions getRegistrationOptions(@RequestBody UserDTO user){
+  public PublicKeyCredentialCreationOptionsDTO getRegistrationOptions(@RequestBody UserDTO user){
     return webAuthnRegistrationService.generateRegistrationOptions(user);
   }
 

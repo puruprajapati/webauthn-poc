@@ -3,6 +3,8 @@ package com.bofa.webauthn.service;
 import com.bofa.webauthn.config.WebAuthnConfig;
 import com.bofa.webauthn.domain.Credential;
 import com.bofa.webauthn.domain.User;
+import com.bofa.webauthn.dto.PublicKeyCredentialCreationOptionsDTO;
+import com.bofa.webauthn.dto.PublicKeyCredentialUserEntityDTO;
 import com.bofa.webauthn.dto.UserDTO;
 import com.bofa.webauthn.repository.ChallengeStore;
 import com.bofa.webauthn.repository.UserStore;
@@ -36,7 +38,7 @@ public class WebAuthnRegistrationService {
     this.userStore = userStore;
   }
 
-  public PublicKeyCredentialCreationOptions generateRegistrationOptions(UserDTO userDTO){
+  public PublicKeyCredentialCreationOptionsDTO generateRegistrationOptions(UserDTO userDTO){
     Optional<User> userOptional = userStore.getUserByUserId(userDTO.getId());
 
     User user = userOptional.orElse(new User());
@@ -55,16 +57,8 @@ public class WebAuthnRegistrationService {
 
     PublicKeyCredentialRpEntity rp = new PublicKeyCredentialRpEntity(webAuthnConfig.getRelyingPartyId(), webAuthnConfig.getRelyingParty());
 
-    PublicKeyCredentialUserEntity userEntity = new PublicKeyCredentialUserEntity(
-      Base64.getUrlDecoder().decode(user.getId()),
-      user.getName(),
-      user.getDisplayName()
-    );
-    
+    PublicKeyCredentialUserEntityDTO userEntity = new PublicKeyCredentialUserEntityDTO( Base64.getUrlEncoder().withoutPadding().encodeToString(user.getId().getBytes()), user.getName(), user.getDisplayName());
     List<PublicKeyCredentialParameters> publicKeyCredentialParameters = getPublicKeyCredentialParameters();
-
-    AttestationConveyancePreference attestationConveyancePreference = AttestationConveyancePreference.DIRECT;
-
     AuthenticatorSelectionCriteria authenticatorSelectionCriteria = new AuthenticatorSelectionCriteria(
       AuthenticatorAttachment.CROSS_PLATFORM,
       true,
@@ -72,19 +66,22 @@ public class WebAuthnRegistrationService {
       UserVerificationRequirement.PREFERRED
     );
 
+    AttestationConveyancePreference attestationConveyancePreference = AttestationConveyancePreference.DIRECT;
+
     userStore.saveUser(user);
 
-    return new PublicKeyCredentialCreationOptions(
+    return new PublicKeyCredentialCreationOptionsDTO(
+      challengeBase64,
       rp,
       userEntity,
-      challenge,
+      new ArrayList<>(),
       publicKeyCredentialParameters,
       Long.parseLong(webAuthnConfig.getTimeout()),
-      new ArrayList<>(),
-      authenticatorSelectionCriteria,
       attestationConveyancePreference,
-      null
+      authenticatorSelectionCriteria
     );
+
+
   }
 
   public boolean verifyRegistration(String userId, String registrationResponseJSON){

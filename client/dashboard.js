@@ -11,6 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
   logoutButton.addEventListener("click", () => {
     // Remove user data from session or local storage and redirect to the login page
     sessionStorage.removeItem("username");
-    window.location.href = "/login"; // Redirect to login page after logout
+    window.location.href = "/"; // Redirect to login page after logout
   });
 });

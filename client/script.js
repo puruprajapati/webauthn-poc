@@ -67,9 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const publicKeyCredentialCreationOptionsJSON = await response.json();
       console.log(JSON.stringify(publicKeyCredentialCreationOptionsJSON));
 
-      // modify response as the WebAuthn spec
-      delete publicKeyCredentialCreationOptionsJSON.hints;
-      publicKeyCredentialCreationOptionsJSON.challenge = publicKeyCredentialCreationOptionsJSON.challenge.value;
+      // // modify response as the WebAuthn spec
+      // delete publicKeyCredentialCreationOptionsJSON.hints;
+      // publicKeyCredentialCreationOptionsJSON.challenge = publicKeyCredentialCreationOptionsJSON.challenge.value;
 
       const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(publicKeyCredentialCreationOptionsJSON);
       const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
