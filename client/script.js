@@ -156,4 +156,33 @@ document.addEventListener("DOMContentLoaded", () => {
       showError("login-error", "Login failed. Please try again.");
     }
   });
+
+  async function checkBluetoothEnabled() {
+    if (!navigator.bluetooth) {
+      throw new Error("Bluetooth not supported on this device");
+    }
+
+    try {
+      const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+      console.log("Bluetooth is enabled and a device is found. ");
+      console.log(device);
+      return true;
+    } catch (error) {
+      console.error('Bluetooth not enabled:', error);
+      return false;
+    }
+  }
+
+  async function enforceBluetoothForWebAuthn() {
+    const isIOS = /iPHone|iPad|iPod/.test(navigator.userAgent);
+    const isAndroid = /Andriod/.test(navigator.userAgent);
+
+    if (isIOS || isAndroid) {
+      const isBluetoothEnabled = await checkBluetoothEnabled();
+      if (!isBluetoothEnabled) {
+        alert("Bluetooth must be enabled");
+        return;
+      }
+    }
+  }
 });
