@@ -34,8 +34,8 @@ public class WebAuthnController {
   }
 
   @PostMapping("authenticate/options")
-  public PublicKeyCredentialRequestOptionsDTO getAuthenticationOPtions(@RequestBody UserDTO user){
-    PublicKeyCredentialRequestOptionsDTO result = webAuthnAuthenticationService.generateAuthenticationOptions(user.getId());
+  public PublicKeyCredentialRequestOptionsDTO getAuthenticationOptions(){
+    PublicKeyCredentialRequestOptionsDTO result = webAuthnAuthenticationService.generateAuthenticationOptions();
     return result;
   }
 

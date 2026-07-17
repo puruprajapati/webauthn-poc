@@ -1,6 +1,6 @@
 package com.bofa.webauthn.service;
 
-import com.bofa.webauthn.config.WebAuthnConfig;
+import com.bofa.webauthn.config.FidoServerConfig;
 import com.bofa.webauthn.domain.Credential;
 import com.bofa.webauthn.domain.User;
 import com.bofa.webauthn.dto.PublicKeyCredentialDescriptorDTO;
@@ -19,28 +19,24 @@ import com.webauthn4j.verifier.exception.VerificationException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class WebAuthnAuthenticationService {
   private final WebAuthnManager webAuthnManager;
-  private final WebAuthnConfig webAuthnConfig;
+  private final FidoServerConfig fidoServerConfig;
   private final ChallengeStore challengeStore;
   private final UserStore userStore;
 
-  public WebAuthnAuthenticationService(WebAuthnConfig webAuthnConfig, ChallengeStore challengeStore, UserStore userStore) {
+  public WebAuthnAuthenticationService(FidoServerConfig fidoServerConfig, ChallengeStore challengeStore, UserStore userStore) {
     this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
-    this.webAuthnConfig = webAuthnConfig;
+    this.fidoServerConfig = fidoServerConfig;
     this.challengeStore = challengeStore;
     this.userStore = userStore;
   }
 
-  public PublicKeyCredentialRequestOptionsDTO generateAuthenticationOptions(String userId) {
-    Optional<User> userOptional = userStore.getUserByUserId(userId);
-
-    if (userOptional.isEmpty()) {
-      throw new IllegalArgumentException("User not found");
-    }
+  public PublicKeyCredentialRequestOptionsDTO generateAuthenticationOptions() {
+    // For true passwordless authentication, we don't require userID upfront
+    // The resident key will provide the userID during verification
 
     // Generate a new challenge for authentication
     Challenge challenge = new DefaultChallenge(new Random().ints(97, 123)
@@ -48,31 +44,20 @@ public class WebAuthnAuthenticationService {
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
       .toString());
     String challengeBase64 = Base64.getUrlEncoder().withoutPadding().encodeToString(challenge.getValue());
-    challengeStore.saveChallenge(userId, challengeBase64);
 
-    // Fetch the user's registered credentials
-    List<Credential> userCredentials = userOptional.get().getCredentials();
-    List<PublicKeyCredentialDescriptor> allowCredentials = new ArrayList<>();
+    // Store challenge without user-specific mapping (will use generic key or later mapping)
+    challengeStore.saveChallenge("general", challengeBase64);
 
-    for (Credential credential : userCredentials) {
-      allowCredentials.add(new PublicKeyCredentialDescriptor(
-        PublicKeyCredentialType.PUBLIC_KEY,
-        Base64.getUrlDecoder().decode(credential.getCredentialId()),
-        credential.getCredentialRecord().getTransports()
-      ));
-    }
-
-    // Convert to DTO for client-side compatibility
-    List<PublicKeyCredentialDescriptorDTO> allowCredentialsDTO = allowCredentials.stream()
-      .map(PublicKeyCredentialDescriptorDTO::new)
-      .collect(Collectors.toList());
+    // For passwordless authentication with resident keys, we don't send allowCredentials
+    // The client will use resident keys and the authenticator will determine which user
+    List<PublicKeyCredentialDescriptorDTO> allowCredentialsDTO = new ArrayList<>();
 
 
     // Build the options
     PublicKeyCredentialRequestOptionsDTO result = new PublicKeyCredentialRequestOptionsDTO(
       challengeBase64,
-      Long.parseLong(webAuthnConfig.getTimeout()),
-      webAuthnConfig.getRelyingPartyId(),
+      Long.parseLong(fidoServerConfig.getTimeout()),
+      fidoServerConfig.getRelyingPartyId(),
       allowCredentialsDTO,
       UserVerificationRequirement.PREFERRED,
       null
@@ -81,13 +66,8 @@ public class WebAuthnAuthenticationService {
   }
 
   public boolean verifyAuthentication(String userId, String authenticationResponseJSON) {
-    String challengeStr = Optional.ofNullable(challengeStore.getChallengeForUser(userId))
-      .orElseThrow(() -> new IllegalArgumentException("No challenge found for user: " + userId));
-
-
-    User user = userStore.getUserByUserId(userId).orElseThrow(() ->
-      new IllegalArgumentException("User not found for ID: " + userId)
-    );
+    // For passwordless authentication with resident keys, userId may be null
+    // In that case, we'll extract it from the credential
 
     AuthenticationData authenticationData;
     try {
@@ -96,8 +76,19 @@ public class WebAuthnAuthenticationService {
       throw new IllegalArgumentException("Invalid authentication response JSON", e);
     }
 
+    // If userId is not provided, extract from resident key
+    String resolvedUserId = (userId == null || userId.isEmpty()) ?
+      extractUserIdFromResidentKey(authenticationData) : userId;
+
+    String challengeStr = Optional.ofNullable(challengeStore.getChallengeForUser("general"))
+      .orElseThrow(() -> new IllegalArgumentException("No challenge found"));
+
+    User user = userStore.getUserByUserId(resolvedUserId).orElseThrow(() ->
+      new IllegalArgumentException("User not found for ID: " + resolvedUserId)
+    );
+
     // Prepare Server Properties
-    ServerProperty serverProperty = new ServerProperty(new Origin(webAuthnConfig.getOrigin()), webAuthnConfig.getRelyingPartyId(), new DefaultChallenge(challengeStr));
+    ServerProperty serverProperty = new ServerProperty(new Origin(fidoServerConfig.getOrigin()), fidoServerConfig.getRelyingPartyId(), new DefaultChallenge(challengeStr));
 
     // Fetch credential data from the userStore
     String credentialId = Base64.getUrlEncoder().withoutPadding().encodeToString(authenticationData.getCredentialId());
@@ -111,8 +102,8 @@ public class WebAuthnAuthenticationService {
       serverProperty,
       credentialRecord,
       null,
-      webAuthnConfig.isUserVerificationRequired(),
-      webAuthnConfig.isUserPresenceRequired()
+      fidoServerConfig.isUserVerificationRequired(),
+      fidoServerConfig.isUserPresenceRequired()
     );
 
     // Verify authentication
@@ -123,7 +114,27 @@ public class WebAuthnAuthenticationService {
     }
 
     // Authentication is successful
-    System.out.println("Authentication successful for user: " + userId);
+    System.out.println("Authentication successful for user: " + resolvedUserId);
     return true;
+  }
+
+  private String extractUserIdFromResidentKey(AuthenticationData authenticationData) {
+    // Extract userId from the resident key credential
+    // The authenticator provides the user handle which contains the userId
+    if (authenticationData.getCredentialId() != null) {
+      String credentialId = Base64.getUrlEncoder().withoutPadding().encodeToString(authenticationData.getCredentialId());
+
+      // Search through all users to find which one has this credential
+      // This is necessary because we don't know the user upfront in passwordless flow
+      List<User> allUsers = userStore.getAllUsers();
+      for (User user : allUsers) {
+        for (Credential credential : user.getCredentials()) {
+          if (credential.getCredentialId().equals(credentialId)) {
+            return user.getId();
+          }
+        }
+      }
+    }
+    throw new IllegalArgumentException("Unable to extract userId from resident key");
   }
 }

@@ -17,9 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   registerButton.addEventListener("click", async () => {
     const userId = document.getElementById("userid").value;
-    const username = document.getElementById("username").value;
-    const displayName = document.getElementById("displayname").value;
-    const phone = document.getElementById("phone").value;
+    const username = userId;
+    const displayName = "";
+    const phone = "";
+    // const username = document.getElementById("username").value;
+    // const displayName = document.getElementById("displayname").value;
+    // const phone = document.getElementById("phone").value;
 
     // Validate input fields
     let isValid = true;
@@ -30,26 +33,26 @@ document.addEventListener("DOMContentLoaded", () => {
       hideError("userid-error");
     }
 
-    if (!username) {
-      showError("username-error", "Username is required.");
-      isValid = false;
-    } else {
-      hideError("username-error");
-    }
+    // if (!username) {
+    //   showError("username-error", "Username is required.");
+    //   isValid = false;
+    // } else {
+    //   hideError("username-error");
+    // }
 
-    if (!displayName) {
-      showError("displayname-error", "Display Name is required.");
-      isValid = false;
-    } else {
-      hideError("displayname-error");
-    }
+    // if (!displayName) {
+    //   showError("displayname-error", "Display Name is required.");
+    //   isValid = false;
+    // } else {
+    //   hideError("displayname-error");
+    // }
 
-    if (!phone) {
-      showError("phone-error", "Phone number is required.");
-      isValid = false;
-    } else {
-      hideError("phone-error");
-    }
+    // if (!phone) {
+    //   showError("phone-error", "Phone number is required.");
+    //   isValid = false;
+    // } else {
+    //   hideError("phone-error");
+    // }
 
     if (!isValid) return;
 
@@ -102,19 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   loginButton.addEventListener("click", async () => {
-    const loginId = document.getElementById("loginid").value;
-
-    // Validate login input
-    if (!loginId) {
-      showError("loginid-error", "Login ID is required.");
-      return;
-    } else {
-      hideError("loginid-error");
-    }
-
-    const data = { id: loginId };
-
     try {
+      // For resident keys, we don't specify a userID - let the authenticator show available credentials
+      const data = {};
+
       const response = await fetch('http://localhost:8080/api/authenticate/options', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,8 +126,24 @@ document.addEventListener("DOMContentLoaded", () => {
       const authenticationResponseJSON = publicKeyCredential.toJSON();
       console.log("authenticationResponseJSON: %s", JSON.stringify(authenticationResponseJSON));
 
+      // Extract userID from the credential response (resident key stores it)
+      // The userID is typically in the response, we can get it from the parsed credential
+      let userId = null;
+
+      // Try to get userID from the response - this depends on how your server returns it
+      // For resident keys, the authenticator response should contain the userID
+      if (publicKeyCredential.response && publicKeyCredential.response.userHandle) {
+        // userHandle is the userID encoded in the credential response
+        const userHandleArray = new Uint8Array(publicKeyCredential.response.userHandle);
+        userId = new TextDecoder().decode(userHandleArray);
+      }
+
+      if (!userId) {
+        throw new Error("User ID not found in credential response. Make sure you're using resident keys.");
+      }
+
       const requestBody = {
-        userId: loginId,
+        userId: userId,
         'authenticateResponseJSON': JSON.stringify(authenticationResponseJSON)
       };
 

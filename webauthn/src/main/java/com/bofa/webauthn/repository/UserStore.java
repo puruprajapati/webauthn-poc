@@ -5,6 +5,7 @@ import com.bofa.webauthn.domain.User;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -14,6 +15,10 @@ public class UserStore {
 
   public Optional<User> getUserByUserId(String userId){
     return Optional.ofNullable(users.get(userId));
+  }
+
+  public List<User> getAllUsers(){
+    return new java.util.ArrayList<>(users.values());
   }
 
   public void saveUser(User user){

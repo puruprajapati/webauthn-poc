@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class VerifyAuthenticationDTO {
-  private String userId;
+  private String userId; // Optional - for backward compatibility with userID-based auth
   private String authenticateResponseJSON;
 }
